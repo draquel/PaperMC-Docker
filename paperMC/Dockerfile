@@ -1,5 +1,5 @@
 ############################ RUNTIME ############################
-FROM eclipse-temurin:20-jre as runtime
+FROM eclipse-temurin:20-jre
 
 ARG TARGETARCH
 # Install gosu, curl & jq
@@ -20,7 +20,7 @@ EXPOSE 25565/udp
 EXPOSE 25575/tcp
 EXPOSE 25575/udp
 
-# Expose floodgate port
+# Expose Geyser port
 EXPOSE 19132/tcp
 EXPOSE 19132/udp
 
@@ -38,7 +38,9 @@ WORKDIR /data
 
 COPY /plugins /data/plugins
 COPY /server.properties /data
-RUN echo "eula=true" > eula.txt
+
+ARG EULA=false
+RUN echo "eula=$EULA" > eula.txt
 
 ARG OP_ID
 ARG OP_NAME
