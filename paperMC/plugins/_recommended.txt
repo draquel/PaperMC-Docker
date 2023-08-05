@@ -1,0 +1,8 @@
+GEYSER & Floodgate - Bedrock / Platform crossplay support
+https://geysermc.org/
+
+WorldGuard - World Management tools
+https://www.curseforge.com/minecraft/bukkit-plugins/worldguard
+
+WorldEdit - World manipulation tools
+https://www.curseforge.com/minecraft/mc-mods/worldedit
