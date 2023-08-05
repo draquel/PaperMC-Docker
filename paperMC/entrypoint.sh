@@ -1,5 +1,5 @@
-# original script by https://github.com/mtoensing/Docker-Minecraft-PaperMC-Server/blob/latest/docker-entrypoint.sh
 #!/bin/sh
+# original script by https://github.com/mtoensing/Docker-Minecraft-PaperMC-Server/blob/latest/docker-entrypoint.sh
 set -e
 
 DOCKER_USER='dockeruser'
