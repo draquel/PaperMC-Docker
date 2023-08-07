@@ -1,27 +1,101 @@
 version: '3'
 
 # noinspection ComposeUnknownKeys
-name: papermc
+name: minecraft
+volumes:
+        mysql_data:
+        survival_data:
 services:
-        papermc:
+        mysql:
+                container_name: mysql
+                restart: unless-stopped
+                image: mysql:latest
+                command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+                environment:
+                        MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+                        MYSQL_DATABASE: mc-luckperms
+                        MYSQL_USER: ${DATABASE_USER}
+                        MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+                ports:
+                        - 3306:3306
+                healthcheck:
+                        test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+                        timeout: 5s
+                        retries: 10
+                volumes:
+                        - $PWD/mysql:/docker-entrypoint-initdb.d/
+                        - mysql_data:/var/lib/mysql
+
+        phpmyadmin:
+                container_name: phpmyadmin
+                restart: unless-stopped
+                image: phpmyadmin/phpmyadmin
+                ports:
+                        - 9000:80
+                environment:
+                        PMA_HOST: mysql
+                        PMA_PORT: 3306
+                        PMA_USERNAME: root
+                        PMA_PASSWORD: ${DATABASE_PASSWORD}
+                depends_on:
+                        mysql:
+                                condition: service_healthy
+
+        survival:
+                container_name: survival-server
+                restart: unless-stopped
                 build:
-                        context: paperMC/
+                        context: papermc/
                         args:
+                                EULA: true
                                 VERSION: 1.20.1
                                 MEMORY_SIZE: 4G
-                                EULA: true
                                 TZ: America/New_York
                                 JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
                                 PAPERMCFLAGS: --world world
-                                OP_ID: ${OPID}
-                                OP_NAME: ${OPNAME}
-                env_file:
-                        - .env
+                                SERVER_CONFIG: survival
+                                SERVER_DB: mc-survival
+                                DB_HOST: ${DATABASE_HOST}
+#                                OP_ID: ${OPID}
+#                                OP_NAME: ${OPNAME}
                 ports:
                         - 25565:25565
                         - 25575:25575
                         - 19132:19132
                 volumes:
-                        - papermc_data:/data:rw
-volumes:
-        papermc_data:
+                        - survival_data:/data:rw
+                depends_on:
+                        mysql:
+                                condition: service_healthy
+                healthcheck:
+                        test: netstat -ltn | grep -c 25575
+
+#        lobby:
+#                build:
+#                        context: papermc/
+#                        args:
+#                                EULA: true
+#                                VERSION: 1.20.1
+#                                MEMORY_SIZE: 4G
+#                                TZ: America/New_York
+#                                JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
+#                                PAPERMCFLAGS: --world world
+#                                OP_ID: ${OPID}
+#                                OP_NAME: ${OPNAME}
+#                                SERVER_DB: mc-lobby
+#                                DB_HOST: mysql
+#                env_file:
+#                        - ./lobby.env
+#                ports:
+#                        - 25564:25565
+#                        - 25574:25575
+#                        - 19131:19132
+#                        - 8079:8080
+#                volumes:
+#                        - lobby_data:/data:rw
+
+#       velocity:
+#                build:
+#                        context: velocity/
+#                ports:
+#                        -

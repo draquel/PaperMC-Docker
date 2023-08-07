@@ -6,3 +6,13 @@ https://www.curseforge.com/minecraft/bukkit-plugins/worldguard
 
 WorldEdit - World manipulation tools
 https://www.curseforge.com/minecraft/mc-mods/worldedit
+
+CoreProtect
+
+GraveStonesPlus
+
+WebConsole
+
+LuckPerms
+
+inlcude plugin config files in the appropriate path within this plugin directory EG: LuckPerms/config.yml
