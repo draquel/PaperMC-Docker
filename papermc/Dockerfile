@@ -1,26 +1,24 @@
-FROM mysql:5.7 as build
-
-ARG SERVER_DB=minecraft
-RUN echo "CREATE DATABASE IF NOT EXISTS `$SERVER_DB`;" > /docker-entrypoint-initdb.d/02-create_table.sql
-RUN echo "CREATE DATABASE IF NOT EXISTS `$SERVER_DB`; DECLARE @dbname nvarchar(128); SET @dbname = $SERVER_DB; IF (EXISTS (SELECT name FROM master.dbo.databases WHERE ('[' + name + ']' = @dbname OR name = @dbname))) GRANT ALL PRIVILEGES ON $SERVER_DB.* TO 'minecraft'@'%';" > /docker-entrypoint-initdb.d/02-permissions.sql
-
 ############################ RUNTIME ############################
 FROM eclipse-temurin:20-jre
 
 ARG TARGETARCH
-# Install gosu, curl & jq
-RUN set -eux && apt update -y && apt install -y gosu curl jq && rm -rf /var/lib/apt/lists/* && gosu nobody true
+# Install gosu, mysql-client, curl & jq
+RUN set -eux && apt update -y && apt install -y gosu curl jq mysql-client && rm -rf /var/lib/apt/lists/* && gosu nobody true
 
 #Install mcrcon
 ARG MCRCON_VER=0.7.2
 ADD https://github.com/Tiiffi/mcrcon/releases/download/v${MCRCON_VER}/mcrcon-${MCRCON_VER}-linux-x86-64.tar.gz /tmp/mcrcon.tgz
 RUN tar -x -C /usr/local/bin -f /tmp/mcrcon.tgz mcrcon && rm /tmp/mcrcon.tgz
 
+ARG SERVER_DB=minecraft
+ENV DATABASE_DB=$SERVER_DB
+
 WORKDIR /app/minecraft
 #Copy scripts and allow execute
 COPY /entrypoint.sh /app/minecraft
 COPY /getpaper.sh /app/minecraft
 COPY /setperms.sh /app/minecraft
+RUN echo "CREATE DATABASE IF NOT EXISTS $SERVER_DB" > /app/minecraft/setup.sql
 RUN chmod +x /app/minecraft/entrypoint.sh
 RUN chmod +x /app/minecraft/getpaper.sh;
 RUN chmod +x /app/minecraft/setperms.sh;
@@ -46,7 +44,7 @@ COPY "/$SERVER_CONFIG.server.properties" /data/server.properties
 
 #Copy Plugins
 ARG DB_HOST
-ARG SERVER_DB=minecraft
+ENV DATABASE_HOST=$DB_HOST
 COPY /plugins /data/plugins
 RUN grep -rl mc-server-db . | xargs sed -i "s/mc-server-db/$SERVER_DB/g" && grep -rl db-host . | xargs sed -i "s/db-host/$DB_HOST/g"
 

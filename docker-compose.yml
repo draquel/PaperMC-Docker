@@ -10,7 +10,6 @@ services:
                 container_name: mysql
                 restart: unless-stopped
                 image: mysql:latest
-                command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
                 environment:
                         MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
                         MYSQL_DATABASE: mc-luckperms
@@ -21,9 +20,8 @@ services:
                 healthcheck:
                         test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
                         timeout: 5s
-                        retries: 10
+                        retries: 12
                 volumes:
-                        - $PWD/mysql:/docker-entrypoint-initdb.d/
                         - mysql_data:/var/lib/mysql
 
         phpmyadmin:
@@ -54,7 +52,7 @@ services:
                                 JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
                                 PAPERMCFLAGS: --world world
                                 SERVER_CONFIG: survival
-                                SERVER_DB: mc-survival
+                                SERVER_DB: mc_survival
                                 DB_HOST: ${DATABASE_HOST}
 #                                OP_ID: ${OPID}
 #                                OP_NAME: ${OPNAME}
