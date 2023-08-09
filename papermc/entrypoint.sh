@@ -24,7 +24,5 @@ if ! id "$DOCKER_USER" >/dev/null 2>&1; then
     fi
 fi
 
-mysql --host=$DATABASE_HOST --user=root --password=password mysql < /app/minecraft/setup.sql
-
 export HOME=/home/$DOCKER_USER
 exec gosu $DOCKER_USER:$DOCKER_GROUP java -jar -Xms$MEMORYSIZE -Xmx$MEMORYSIZE $JAVAFLAGS /app/minecraft/papermc.jar $PAPERMC_FLAGS --nogui --universe universe

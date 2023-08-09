@@ -11,8 +11,8 @@ services:
                 restart: unless-stopped
                 image: mysql:latest
                 environment:
-                        MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
-                        MYSQL_DATABASE: mc-luckperms
+                        MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+                        MYSQL_DATABASE: ${DATABASE_DB}
                         MYSQL_USER: ${DATABASE_USER}
                         MYSQL_PASSWORD: ${DATABASE_PASSWORD}
                 ports:
@@ -45,55 +45,34 @@ services:
                 build:
                         context: papermc/
                         args:
-                                EULA: true
                                 VERSION: 1.20.1
+                                EULA: true
                                 MEMORY_SIZE: 4G
                                 TZ: America/New_York
                                 JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
                                 PAPERMCFLAGS: --world world
-                                SERVER_CONFIG: survival
-                                SERVER_DB: mc_survival
-                                DB_HOST: ${DATABASE_HOST}
+                                SERVER_CONFIG: survival # should be copied from a volume location / plugins too?
 #                                OP_ID: ${OPID}
 #                                OP_NAME: ${OPNAME}
                 ports:
-                        - 25565:25565
-                        - 25575:25575
-                        - 19132:19132
+                        - "25565:25565/tcp"
+                        - "25575:25575/tcp"
+                        - "19132:19132/udp"
                 volumes:
                         - survival_data:/data:rw
                 depends_on:
                         mysql:
                                 condition: service_healthy
                 healthcheck:
-                        test: netstat -ltn | grep -c 25575
-
-#        lobby:
+                        test: netstat -ltn | grep -c 25565
+                        timeout: 5s
+                        retries: 12
+#        survival-setup:
+#                container_name: survival-setup
 #                build:
-#                        context: papermc/
+#                        context: ./setup
 #                        args:
-#                                EULA: true
-#                                VERSION: 1.20.1
-#                                MEMORY_SIZE: 4G
-#                                TZ: America/New_York
-#                                JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
-#                                PAPERMCFLAGS: --world world
-#                                OP_ID: ${OPID}
-#                                OP_NAME: ${OPNAME}
-#                                SERVER_DB: mc-lobby
-#                                DB_HOST: mysql
-#                env_file:
-#                        - ./lobby.env
-#                ports:
-#                        - 25564:25565
-#                        - 25574:25575
-#                        - 19131:19132
-#                        - 8079:8080
-#                volumes:
-#                        - lobby_data:/data:rw
-
-#       velocity:
-#                build:
-#                        context: velocity/
-#                ports:
-#                        -
+#                                MC-HOST: survival
+#                                RCON-PASS: ${RCON_PASSWORD}
+#                restart: no
+#                entrypoint: ["basn","-c",""]
