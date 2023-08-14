@@ -1,6 +1,9 @@
 #!/bin/sh
 
-password=$RCON_PASS
+password=$2
+user=$1
+
+mcrcon -p $password  "lp user $user permission set luckperms.* true"
 
 #GROUPS
 mcrcon -p $password "lp creategroup member" "lp creategroup vip" "lp creategroup moderator" "lp creategroup admin" "lp creategroup owner"
@@ -12,7 +15,7 @@ mcrcon -p $password 'lp group default meta addprefix 1 "&7[Guest] &7"' 'lp group
 mcrcon -p $password "lp group owner parent set admin" "lp group admin parent set moderator" "lp group moderator parent set vip" "lp group vip parent set member" "lp group member parent set default"
 
 #DEFAULT GROUP
-mcrcon -p $password "lp group member permission set minecraft.say true"
+mcrcon -p $password "lp group default permission set minecraft.say true"
 mcrcon -p $password "lp group default permission set essentials.help true"
 mcrcon -p $password "lp group default permission set essentials.rules true"
 mcrcon -p $password "lp group default permission set essentials.afk true"
@@ -23,6 +26,7 @@ mcrcon -p $password "lp group member permission set minecraft.tell true"
 mcrcon -p $password "lp group member permission set minecraft.list true"
 
 mcrcon -p $password "lp group member permission set essentials.playtime true"
+mcrcon -p $password "lp group member permission set essentials.time true"
 mcrcon -p $password "lp group member permission set essentials.afk.message true"
 mcrcon -p $password "lp group member permission set essentials.chat.format true"
 mcrcon -p $password "lp group member permission set essentials.chat.color true"
@@ -81,9 +85,12 @@ mcrcon -p $password "lp group admin permission set essentials.chat.spy.exempt tr
 mcrcon -p $password "lp group admin permission set essentials.gamemode true"
 mcrcon -p $password "lp group admin permission set essentials.gamemode.all true"
 mcrcon -p $password "lp group admin permission set essentials.gamemode.others true"
+mcrcon -p $password "lp group admin permission set essentials.setspawn true"
 
 mcrcon -p $password "lp group admin permission set worldedit.* true"
 mcrcon -p $password "lp group admin permission set worldguard.* true"
+mcrcon -p $password "lp group admin permission set minecraft* true"
+
 
 #OWNER GROUP
 
