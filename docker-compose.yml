@@ -4,7 +4,9 @@ version: '3'
 name: minecraft
 volumes:
         mysql_data:
+        lobby_data:
         survival_data:
+        hardcore_data:
 services:
         mysql:
                 container_name: mysql
@@ -19,10 +21,11 @@ services:
                         - 3306:3306
                 healthcheck:
                         test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
-                        timeout: 5s
+                        timeout: 10s
                         retries: 12
                 volumes:
                         - mysql_data:/var/lib/mysql
+                        - "$PWD/init.sql:/docker-entrypoint-initdb.d/init.sql:ro"
 
         phpmyadmin:
                 container_name: phpmyadmin
@@ -39,6 +42,55 @@ services:
                         mysql:
                                 condition: service_healthy
 
+        velocity:
+                container_name: velocity
+                restart: unless-stopped
+                build:
+                        context: ./velocity
+                ports:
+                        - "25577:25577/tcp"
+                        - "19132:19132/udp"
+                healthcheck:
+                        test: netstat -ltn | grep -c 25577
+                        timeout: 5s
+                        retries: 12
+                depends_on:
+                        mysql:
+                                condition: service_healthy
+        lobby:
+                container_name: lobby-server
+                restart: unless-stopped
+                build:
+                        context: papermc/
+                        args:
+                                VERSION: 1.20.1
+                                EULA: true
+                                MEMORY_SIZE: 2G
+                                TZ: America/New_York
+                                JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
+                                PAPERMCFLAGS: --world lobby
+                                #SERVER_CONFIG: lobby # should be copied from a volume location / plugins too?
+                                SERVER_DB: mc_lobby
+#                                OP_ID: ${OPID}
+#                                OP_NAME: ${OPNAME}
+                ports:
+                        - "25564:25565/tcp"
+                        - "25574:25575/tcp"
+                        - "19133:19132/udp"
+                volumes:
+                        - "$PWD/papermc/lobby.server.properties:/app/server.properties:ro"
+                        - "$PWD/papermc/plugins:/app/plugins:ro"
+                        - "$PWD/papermc/config:/app/config:ro"
+                        - lobby_data:/data:rw
+                depends_on:
+                        mysql:
+                                condition: service_healthy
+                        velocity:
+                                condition: service_started
+                healthcheck:
+                        test: netstat -ltn | grep -c 25565
+                        timeout: 5s
+                        retries: 12
         survival:
                 container_name: survival-server
                 restart: unless-stopped
@@ -47,32 +99,64 @@ services:
                         args:
                                 VERSION: 1.20.1
                                 EULA: true
-                                MEMORY_SIZE: 4G
+                                MEMORY_SIZE: 8G
                                 TZ: America/New_York
                                 JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
                                 PAPERMCFLAGS: --world world
-                                SERVER_CONFIG: survival # should be copied from a volume location / plugins too?
+                                #SERVER_CONFIG: survival # should be copied from a volume location / plugins too?
+                                SERVER_DB: mc_survival
 #                                OP_ID: ${OPID}
 #                                OP_NAME: ${OPNAME}
                 ports:
                         - "25565:25565/tcp"
                         - "25575:25575/tcp"
-                        - "19132:19132/udp"
+                        - "19134:19132/udp"
                 volumes:
+                        - "$PWD/papermc/survival.server.properties:/app/server.properties"
+                        - "$PWD/papermc/plugins:/app/plugins:ro"
+                        - "$PWD/papermc/config:/app/config:ro"
                         - survival_data:/data:rw
                 depends_on:
                         mysql:
                                 condition: service_healthy
+                        velocity:
+                                condition: service_started
                 healthcheck:
                         test: netstat -ltn | grep -c 25565
                         timeout: 5s
                         retries: 12
-#        survival-setup:
-#                container_name: survival-setup
-#                build:
-#                        context: ./setup
-#                        args:
-#                                MC-HOST: survival
-#                                RCON-PASS: ${RCON_PASSWORD}
-#                restart: no
-#                entrypoint: ["basn","-c",""]
+
+        hardcore:
+                container_name: hardcore-server
+                restart: unless-stopped
+                build:
+                        context: papermc/
+                        args:
+                                VERSION: 1.20.1
+                                EULA: true
+                                MEMORY_SIZE: 8G
+                                TZ: America/New_York
+                                JAVAFLAGS: -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true
+                                PAPERMCFLAGS: --world world
+                                #SERVER_CONFIG: survival # should be copied from a volume location / plugins too?
+                                SERVER_DB: mc_survival
+                #                                OP_ID: ${OPID}
+                #                                OP_NAME: ${OPNAME}
+                ports:
+                        - "25566:25565/tcp"
+                        - "25576:25575/tcp"
+                        - "19135:19132/udp"
+                volumes:
+                        - "$PWD/papermc/hardcore.server.properties:/app/server.properties"
+                        - "$PWD/papermc/plugins:/app/plugins:ro"
+                        - "$PWD/papermc/config:/app/config:ro"
+                        - hardcore_data:/data:rw
+                depends_on:
+                        mysql:
+                                condition: service_healthy
+                        velocity:
+                                condition: service_started
+                healthcheck:
+                        test: netstat -ltn | grep -c 25565
+                        timeout: 5s
+                        retries: 12
