@@ -8,10 +8,11 @@ WorldEdit - World manipulation tools
 https://www.curseforge.com/minecraft/mc-mods/worldedit
 
 CoreProtect
+https://github.com/PlayPro/CoreProtect/
 
 GraveStonesPlus
+https://github.com/BenCodez/GraveStonesPlus/
 
-WebConsole
 
 LuckPerms
 

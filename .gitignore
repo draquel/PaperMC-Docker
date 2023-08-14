@@ -1,3 +1,8 @@
 *.jar
 .env
+prod.env
+test.env
+papermc/config/*
 papermc/plugins/*/
+*.secret
+.idea/
