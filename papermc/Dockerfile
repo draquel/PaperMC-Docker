@@ -19,12 +19,11 @@ ARG JAVAFLAGS="-Dlog4j2.formatMsgNoLookups=true -XX:+UseG1GC -XX:+ParallelRefPro
 ENV JAVAFLAGS=$JAVAFLAGS
 ARG PAPERMCFLAGS
 ENV PAPERMC_FLAGS=$PAPERMCFLAGS
-ARG SERVER_CONFIG=default
+ARG SERVER_DB=mc_server
+ENV DATABASE_NAME=$SERVER_DB
 ARG OP_ID=NULL
 ARG OP_NAME
 ARG EULA=false
-ARG RCON_PASS=mypassword
-ENV RCON_PASS=$RCON_PASS
 
 WORKDIR /app/minecraft
 
@@ -40,12 +39,6 @@ RUN /app/minecraft/getpaper.sh $VERSION
 
 VOLUME "/data"
 WORKDIR /data
-
-#Copy Server Config
-COPY "/$SERVER_CONFIG.server.properties" /data/server.properties
-
-#Copy Plugins
-COPY /plugins /data/plugins
 
 #Accept EULA
 RUN echo "eula=$EULA" > eula.txt
